@@ -38,3 +38,9 @@ a {
 svg {
   fill: #a0a0a0;
 }
+
+.loading {
+  padding: 10px;
+  transform: translate3d(-50%, -50%, 0);
+  color: #8b8b8b;
+}

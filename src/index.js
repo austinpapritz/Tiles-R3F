@@ -1,5 +1,6 @@
 import { createRoot } from 'react-dom/client'
 import { Suspense } from 'react'
+import { Html } from '@react-three/drei'
 import { Logo } from '@pmndrs/branding'
 import './styles.css'
 import { App } from './App'
@@ -20,10 +21,10 @@ function Overlay() {
 
 createRoot(document.getElementById('root')).render(
   <>
-    <Suspense fallback={null}>
+    <Suspense fallback={<Html center className="loading" children="Loading..." />}>
       <App />
     </Suspense>
-    <Overlay />
-    <Logo style={{ position: 'absolute', bottom: 40, left: 40, width: 30 }} />
+    {/* <Overlay /> */}
+    {/* <Logo style={{ position: 'absolute', bottom: 40, left: 40, width: 30 }} /> */}
   </>
 )
