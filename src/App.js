@@ -13,6 +13,7 @@ const state = proxy({
 	urls: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 5, 7, 8, 2, 4, 9, 6].map((u) => `/${u}.jpg`)
 })
 
+// White bars component at the bottom showing relative scroll position
 function Minimap() {
 	const ref = useRef()
 	const scroll = useScroll()
@@ -37,30 +38,58 @@ function Minimap() {
 	)
 }
 
+// Item is one tile
 function Item({ index, position, scale, c = new THREE.Color(), ...props }) {
 	const ref = useRef()
-	const scroll = useScroll()
+	const data = useScroll()
 	const { clicked, urls } = useSnapshot(state)
 	const [hovered, hover] = useState(false)
 	const click = () => (state.clicked = index === clicked ? null : index)
 	const over = () => hover(true)
 	const out = () => hover(false)
 	useFrame((state, delta) => {
-		const y = scroll.curve(index / urls.length - 1.5 / urls.length, 4 / urls.length)
-		ref.current.material.scale[1] = ref.current.scale.y = damp(ref.current.scale.y, clicked === index ? 5 : 4 + y, 8, delta)
-		ref.current.material.scale[0] = ref.current.scale.x = damp(ref.current.scale.x, clicked === index ? 4.7 : scale[0], 6, delta)
-		if (clicked !== null && index < clicked) ref.current.position.x = damp(ref.current.position.x, position[0] - 2, 6, delta)
-		if (clicked !== null && index > clicked) ref.current.position.x = damp(ref.current.position.x, position[0] + 2, 6, delta)
-		if (clicked === null || clicked === index) ref.current.position.x = damp(ref.current.position.x, position[0], 6, delta)
-		ref.current.material.grayscale = damp(
-			ref.current.material.grayscale,
-			hovered || clicked === index ? 0 : Math.max(0, 1 - y),
-			6,
-			delta
-		)
-		ref.current.material.color.lerp(c.set(hovered || clicked === index ? 'white' : '#aaa'), hovered ? 0.3 : 0.1)
+		// Get the y position based on the scroll and item index
+		const y = calculateY(data, index, urls.length)
+
+		// Adjust the scale and grayscale of the item based on whether it is clicked, hovered, or in view.
+		adjustItemAppearance(ref, y, clicked, index, hovered, delta, c, scale)
+
+		// Adjust the position of items when an item is clicked.
+		adjustItemPosition(ref, position, clicked, index, delta)
 	})
 	return <Image ref={ref} {...props} position={position} scale={scale} onClick={click} onPointerOver={over} onPointerOut={out} />
+}
+
+function calculateY(data, index, length) {
+	// Gives tile scale a bell curve effect
+	return data.curve(index / length - 1.5 / length, 4 / length)
+}
+
+function adjustItemAppearance(ref, y, clicked, index, hovered, delta, color, scale) {
+	// Determine if the current item is the one that has been clicked
+	const isClicked = clicked === index
+
+	// Adjust the vertical scale of the item based on whether it's clicked or its position in the view
+	const targetYScale = isClicked ? 5 : 4 + y
+	ref.current.material.scale[1] = ref.current.scale.y = damp(ref.current.scale.y, targetYScale, 8, delta)
+
+	// Adjust the horizontal scale of the item based on whether it's clicked
+	const targetXScale = isClicked ? 4.7 : scale[0]
+	ref.current.material.scale[0] = ref.current.scale.x = damp(ref.current.scale.x, targetXScale, 6, delta)
+
+	// Adjust the grayscale of the item based on whether it's hovered, clicked, or its position in the view
+	const targetGrayscale = hovered || isClicked ? 0 : Math.max(0, 1 - y)
+	ref.current.material.grayscale = damp(ref.current.material.grayscale, targetGrayscale, 6, delta)
+
+	// Adjust the color of the item based on whether it's hovered or clicked
+	const targetColor = hovered || isClicked ? 'white' : '#aaa'
+	ref.current.material.color.lerp(color.set(targetColor), hovered ? 0.3 : 0.1)
+}
+
+function adjustItemPosition(ref, position, clicked, index, delta) {
+	if (clicked !== null && index < clicked) ref.current.position.x = damp(ref.current.position.x, position[0] - 2, 6, delta)
+	if (clicked !== null && index > clicked) ref.current.position.x = damp(ref.current.position.x, position[0] + 2, 6, delta)
+	if (clicked === null || clicked === index) ref.current.position.x = damp(ref.current.position.x, position[0], 6, delta)
 }
 
 function Items({ w = 0.7, gap = 0.15 }) {
@@ -68,6 +97,7 @@ function Items({ w = 0.7, gap = 0.15 }) {
 	const { width } = useThree((state) => state.viewport)
 	const xW = w + gap
 	return (
+		// how does pages
 		<ScrollControls horizontal damping={0.1} pages={(width - xW + urls.length * xW) / width}>
 			<Minimap />
 			<Scroll>
