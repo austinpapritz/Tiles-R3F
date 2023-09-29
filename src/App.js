@@ -55,24 +55,38 @@ function adjustItemAppearance(ref, y, clicked, index, hovered, delta, color, sca
 }
 
 function adjustItemPosition(ref, position, clicked, index, delta) {
-	if (clicked !== null && index < clicked) ref.current.position.x = damp(ref.current.position.x, position[0] - 2, 6, delta)
-	if (clicked !== null && index > clicked) ref.current.position.x = damp(ref.current.position.x, position[0] + 2, 6, delta)
-	if (clicked === null || clicked === index) ref.current.position.x = damp(ref.current.position.x, position[0], 6, delta)
+	if (clicked !== null) {
+		if (index < clicked) {
+			// If the current item is to the left of the clicked item, move it further left
+			ref.current.position.x = damp(ref.current.position.x, position[0] - 4, 6, delta)
+		} else if (index === clicked) {
+			// If the current item is the clicked item, move it to the left as it expands
+			ref.current.position.x = damp(ref.current.position.x, position[0] - 2, 6, delta)
+		} else {
+			// For the items to the right of the clicked item, keep their position
+			ref.current.position.x = damp(ref.current.position.x, position[0], 6, delta)
+		}
+	} else {
+		// If no item is clicked, reset the position of all items
+		ref.current.position.x = damp(ref.current.position.x, position[0], 6, delta)
+	}
 }
+
+// function adjustItemPosition(ref, position, clicked, index, delta) {
+// 	if (clicked !== null && index < clicked) ref.current.position.x = damp(ref.current.position.x, position[0] - 2, 6, delta)
+// 	if (clicked !== null && index > clicked) ref.current.position.x = damp(ref.current.position.x, position[0] + 2, 6, delta)
+// 	if (clicked === null || clicked === index) ref.current.position.x = damp(ref.current.position.x, position[0], 6, delta)
+// }
 
 function Items({ w = 0.7, gap = 0.15 }) {
 	const { urls } = useSnapshot(state)
-	const { width } = useThree((state) => state.viewport)
 	const xW = w + gap
 	return (
-		// how does pages
-		<ScrollControls horizontal damping={0.1} pages={(width - xW + urls.length * xW) / width}>
-			<Scroll>
-				{
-					urls.map((url, i) => <Item key={i} index={i} position={[i * xW, 0, 0]} scale={[w, 4, 1]} url={url} />) /* prettier-ignore */
-				}
-			</Scroll>
-		</ScrollControls>
+		<group position={[5, 0, 0]}>
+			{urls.map((url, i) => (
+				<Item key={i} index={i} position={[i * xW, 0, 0]} scale={[w, 4, 1]} url={url} />
+			))}
+		</group>
 	)
 }
 
