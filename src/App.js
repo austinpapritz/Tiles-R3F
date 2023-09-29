@@ -1,13 +1,12 @@
 import * as THREE from 'three'
 import { useRef, useState } from 'react'
-import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import { Image, ScrollControls, Scroll, useScroll, Html } from '@react-three/drei'
+import { Canvas, useFrame } from '@react-three/fiber'
+import { Image, Html } from '@react-three/drei'
 import { proxy, useSnapshot } from 'valtio'
 import { Suspense } from 'react'
 
 const damp = THREE.MathUtils.damp
-const material = new THREE.LineBasicMaterial({ color: 'white' })
-const geometry = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, -0.5, 0), new THREE.Vector3(0, 0.5, 0)])
+
 const state = proxy({
 	clicked: null,
 	urls: [1, 2, 3].map((u) => `/${u}.jpg`)
@@ -16,8 +15,7 @@ const state = proxy({
 // Item is one tile
 function Item({ index, position, scale, c = new THREE.Color(), ...props }) {
 	const ref = useRef()
-	const data = useScroll()
-	const { clicked, urls } = useSnapshot(state)
+	const { clicked } = useSnapshot(state)
 	const [hovered, hover] = useState(false)
 	const click = () => (state.clicked = index === clicked ? null : index)
 	const over = () => hover(true)
@@ -71,12 +69,6 @@ function adjustItemPosition(ref, position, clicked, index, delta) {
 		ref.current.position.x = damp(ref.current.position.x, position[0], 6, delta)
 	}
 }
-
-// function adjustItemPosition(ref, position, clicked, index, delta) {
-// 	if (clicked !== null && index < clicked) ref.current.position.x = damp(ref.current.position.x, position[0] - 2, 6, delta)
-// 	if (clicked !== null && index > clicked) ref.current.position.x = damp(ref.current.position.x, position[0] + 2, 6, delta)
-// 	if (clicked === null || clicked === index) ref.current.position.x = damp(ref.current.position.x, position[0], 6, delta)
-// }
 
 function Items({ w = 0.7, gap = 0.15 }) {
 	const { urls } = useSnapshot(state)
